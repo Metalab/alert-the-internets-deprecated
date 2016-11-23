@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Uploaded Videos</title>
+    <link rel="stylesheet" type="text/css" media="screen" href="/static/bootstrap.min.css" />
+    <link rel="stylesheet" type="text/css" media="screen" href="/static/style.css" />
+  </head>
+  <body>
+    <div class="container center-block" style="max-width:60em;">
+      <% videos.forEach( function(video) { %>
+        <div class="item">
+          <div class="item-inner">
+            <a style="float:right;" href="/videos/<%= video._id %>/delete">delete!</a>
+            <h3><%= video.title %></h3>
+            <video
+              class="videoframe"
+              poster="/snapshots/<%= video.snapshotFilename %>"
+              preload="metadata"
+              controls="on">
+              <source src="/videofiles/<%= video.editedVideoFilename %>">
+            </video>
+            <% if (video.creationtime) { %>
+            <p style="float:right">Recorded: <%= video.creationtime %></p>
+            <% } %>
+            <p class="description"><%= video.description %></p>
+            <% if (video.wikipage) { %>
+            <a href="https://metalab.at/wiki/<%= video.wikipage %>" target="_blank">Metalab Wikipage</a>
+            <% } %>
+          </div>
+        </div>
+      <% }) %>
+      <footer class="text-center">
+        <h2>You have reached the bottom!</h2>
+        <p>But it's not the end.</p>
+        <p> Watch the videos of the <a href="https://www.youtube.com/user/AlertTheInternets/videos" target="_blank">previous Alert the Internets project</a>
+          and <a href="https://vimeo.com/search/sort:latest?q=Alert+The+Internets" target="_blank">Kewagis original Alert the Internets series</a>!</p>
+      </footer>
+    </div>
+  </body>
+</html>

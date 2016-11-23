@@ -1,0 +1,24 @@
+{
+  "name": "alert-the-internets",
+  "version": "0.0.1",
+  "description": "Handle Metalab Videologs",
+  "dependencies": {
+    "ejs": "^2.4.1",
+    "express": "~4.10.2",
+    "mongoose": "^4.3.7",
+    "multer": "~0.1.6",
+    "promise": "^7.1.1",
+    "shortid": "^2.2.4"
+  },
+  "devDependencies": {
+    "should": "~7.1.0",
+    "mocha": "~2.3.3",
+    "supertest": "~1.1.0"
+  },
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}

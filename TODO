@@ -1,0 +1,12 @@
+
+server File
+send metainfo
+
+insert metainfo in database
+
+Edit video
+save copy of video
+send video to youtube-server
+
+
+List list of videos + Link to youtube
