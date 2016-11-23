@@ -10,3 +10,5 @@ send video to youtube-server
 
 
 List list of videos + Link to youtube
+
+restrict access to whitelist of IPs
