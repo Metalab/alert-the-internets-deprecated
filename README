@@ -7,3 +7,6 @@ Multimedia publishing system
 * git clone https://github.com/Metalab/alert-the-internets.git
 * cd alert-the-internets
 * nodejs server.js
+
+### Tested with ...
+* Debian testing
