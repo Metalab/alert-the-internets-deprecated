@@ -33,7 +33,7 @@ module.exports.snapshot = function(newVideo, callback) {
 
 module.exports.getCreationtime = function(file, callback) {
   ffmpeg(file).ffprobe(function(err, data) {
-//    console.log(JSON.stringify(data));
+    console.log(JSON.stringify(data));
     var creationtime;
     if (data.streams[0].tags.creation_time) {
       creationtime = data.streams[0].tags.creation_time.toString();
@@ -48,13 +48,20 @@ module.exports.edit = function(newVideo, callback) {
   var mainvid = "uploads/"+newVideo.filename;
 
   ffmpeg(mainvid).ffprobe(function(err, data) {
+    console.log("edit trailer ...");
     var trailer = "mediasnippets/title1.mp4";
     var metadata = data.streams[0];
-    var width = metadata.width;
-    var height = metadata.height;
     var fps = metadata.r_frame_rate.split('/');
     fps = fps[0]/fps[1];
-    console.log(fps);
+    var width = metadata.width;
+    var height = metadata.height;
+    var rotation = metadata.rotation;
+    console.log('dimensions: ' + width + 'x' + height + ', rotation:' + rotation + ', fps: ' + fps);
+    if (rotation == "90" || rotation == "-90") {
+      // swap vars height and width
+      width = [height, height = width][0];
+      console.log('correcting dimensions because of mainvids orientation: '+width+'x'+height);
+    }
     // trailer angleichen
     ffmpeg(trailer)
     .fps(fps)
@@ -75,8 +82,15 @@ module.exports.edit = function(newVideo, callback) {
         }
       ])
     .save("temp/"+newVideo.videoId+"_trailer.mp4")
+    .on('start', function(commandLine) {
+      console.log('Spawned Ffmpeg with command: ' + commandLine);
+    })
+    .on('progress', function(progress) {
+      console.log('Processing: ' + progress.percent + '% done');
+    })
     .on('end', function() {
       console.log('trailer prepared for merging.');
+//      console.log(end);
       editVideo(mainvid, "temp/"+newVideo.videoId+"_mainvid.mp4");
     });
   });
@@ -129,4 +143,10 @@ module.exports.remove = function(videoId) {
     if (err) return handleError(err);
     console.log(requestedVideoId +" deleted!");
   });
+};
+
+
+module.exports.uploadToYoutube = function(newvideo, callback) {
+  console.log(video);
+  callback();
 };

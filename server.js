@@ -84,6 +84,10 @@ app.post('/api/upload',function(req,res){
         newVideo.update( {editingDone: true}, {safe: true} , function(err) {
           if (err) return console.error(err);
           console.log("Update: editingDone set true");
+          video.uploadToYoutube(function(err, newVideo) {
+            if (err) return console.error(err);
+            console.log("Video uploaded to YT!");
+          });
         });
 //        console.log(JSON.stringify(newVideo));
       });
