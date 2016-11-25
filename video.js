@@ -56,6 +56,7 @@ module.exports.edit = function(newVideo, callback) {
     var width = metadata.width;
     var height = metadata.height;
     var rotation = metadata.rotation;
+    var sar = metadata.sample_aspect_ratio;
     console.log('dimensions: ' + width + 'x' + height + ', rotation:' + rotation + ', fps: ' + fps);
     if (rotation == "90" || rotation == "-90") {
       // swap vars height and width
@@ -78,7 +79,7 @@ module.exports.edit = function(newVideo, callback) {
         },
         {
           filter: 'setsar',
-          options: '1:1'
+          options: sar
         }
       ])
     .save("temp/"+newVideo.videoId+"_trailer.mp4")
@@ -95,15 +96,8 @@ module.exports.edit = function(newVideo, callback) {
     });
   });
   var editVideo = function(mainvid, outputpath) {
-    console.log('Normalize mainvid for merging (setsar 1:1 etc) ...');
+    console.log('Normalize mainvid for merging');
     ffmpeg(mainvid)
-    .videoFilters(
-      [
-        {
-          filter: 'setsar',
-          options: '1:1'
-        }
-      ])
     .save(outputpath)
     .on('end', function() {
       console.log('mainvid prepared for merging.');
@@ -124,6 +118,14 @@ module.exports.edit = function(newVideo, callback) {
     })
     .on('end', function() {
       console.log('Merging finished!');
+      fs.unlink("temp/"+newVideo.videoId+"_trailer.mp4"), function(err){
+        if(err) return console.log(err);
+        console.log('Temp file deleted successfully: '+'temp/'+newVideo.videoId+'_trailer.mp4');
+      }
+      fs.unlink("temp/"+newVideo.videoId+"_mainvid.mp4"), function(err){
+        if(err) return console.log(err);
+        console.log('Temp file deleted successfully: '+'temp/'+newVideo.videoId+'_mainvid.mp4');
+      }
 
       newVideo.update( {editedVideoFilename: outputName}, {safe: true} , function(err) {
         if (err) return console.error(err);
@@ -146,7 +148,8 @@ module.exports.remove = function(videoId) {
 };
 
 
-module.exports.uploadToYoutube = function(newvideo, callback) {
+module.exports.uploadToYoutube = function(video, callback) {
   console.log(video);
+  console.log(JSON.stringify(video));
   callback();
 };
