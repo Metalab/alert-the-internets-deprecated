@@ -57,6 +57,14 @@ app.get('/videos/:id/delete',function(req,res){
 });
 
 
+app.get('/videos/:id/upload/youtube',function(req,res){
+//  models.Video.
+//    find({ _id: id });
+  video.uploadToYoutube(req);
+  res.send('upload to Youtube!');
+});
+
+
 app.post('/api/upload',function(req,res){
   upload(req,res,function(err) {
     if(err) {
@@ -76,50 +84,18 @@ app.post('/api/upload',function(req,res){
       filename: req.files.video.name,
       originalFilename: req.files.video.originalname,
     });
-    newVideo.save(function (err, newVideo) {
-      if (err) return console.error(err);
-      video.edit(newVideo, function(err) {
-        if (err) return console.error(err);
-//        console.log(JSON.stringify(newVideo));
-        newVideo.update( {editingDone: true}, {safe: true} , function(err) {
-          if (err) return console.error(err);
-          console.log("Update: editingDone set true");
-          video.uploadToYoutube( newVideo, function(err) {
-            if (err) return console.error(err);
-            console.log("Video uploaded to YT (not for real yet)!");
-          });
-        });
-//        console.log(JSON.stringify(newVideo));
-      });
-      video.snapshot(newVideo, function(snapshotFilename) {
-        // TBD: send success message to user
-      });
-      video.getCreationtime("uploads/"+newVideo.filename, function(creationtime) {
-        if (creationtime) {
-          newVideo.update( {creationtime: creationtime}, {safe: true} , function(err) {
-            if (err) return console.error(err);
-            console.log("creationtime - updated!");
-          });
-        }
-      });
-//        var  = video.snapshot("uploads/"+req.files.video.name, Date.now()+'_'+req.body.title);
 
+    newVideo.save().then(function(newVideo) {
+      Promise.all(
+        [video.snapshot(newVideo), video.getCreationtime(newVideo), video.edit(newVideo)]
+      );
+    }).then(function(newVideo) {
+      video.uploadToYoutube(newVideo);
+      res.end("File is uploaded");
     });
-
-    res.end("File is uploaded");
   });
-
-  //console.log(dbi);
-  // add form input into db
-//  dbi.addEntry(req.body.title, req.body.description, req.files.video.name);
 });
 
-/*
-Video.find(function(err, videos) {
-  if (err) return console.error(err);
-  console.log(JSON.stringify(videos));
-});
-*/
 
 app.listen(3500,function(){
   console.log("Working on port 3500");
