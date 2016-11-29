@@ -2,6 +2,8 @@
 
 Multimedia publishing system
 
+![screenshot](screenshot.png)
+
 ## How to install
 * apt-get install nodejs npm mongodb
 * git clone https://github.com/Metalab/alert-the-internets.git
