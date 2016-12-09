@@ -1,0 +1,18 @@
+---
+- hosts: all
+  sudo: yes
+  tasks:
+      - name: Linking /home/vagrant/alert-the-internets -> /vagrant
+        file: src=/vagrant
+              dest=/home/vagrant/alert-the-internets
+              state=link
+
+      - name: Updating cache
+        apt: update_cache=yes
+
+      - name: Installing packages
+        apt: name={{ item }} 
+        with_items:
+          - nodejs 
+          - npm
+          - mongodb 
