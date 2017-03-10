@@ -12,36 +12,29 @@ var models      =   require('./models/models.js'); // db model definitions
 
 module.exports.snapshot = function(newVideo) {
   return new Promise(function(resolve, reject){
-    var file = "uploads/"+newVideo.filename;
+    var file = newVideo.sourcePath;
     var outputname = newVideo.videoId+'_'+newVideo.machinetitle+'.png';
-    ffmpeg(file)
-    .screenshots({
+    ffmpeg(file).screenshots({
       count: 1,
       folder: 'snapshots',
       filename: outputname,
-  //     size: '640x?',
-    })
-    .on('end', function() {
-      newVideo.update( {snapshotFilename: outputname}, {safe: true} , function(err) {
-        if (err) return console.error(err);
-        console.log('Snapshot File: '+outputname);
-        console.log("Update: snapshotFilename set");
-      });
+      //size: '640x?',
+    }).on('end', function() {
+      console.log('Snapshot File: '+outputname);
       resolve(outputname);
     });
   });
 };
 
-
 module.exports.getCreationtime = function(newVideo) {
-  var file = "uploads/"+newVideo.filename;
+  var file = newVideo.sourcePath;
   return new Promise(function(resolve, reject){
     ffmpeg(file).ffprobe(function(err, data) {
       console.log(JSON.stringify(data));
       if (data.streams[0].tags.creation_time) {
         var creationtime = data.streams[0].tags.creation_time.toString();
         console.log("creation time: "+creationtime);
-        newVideo.update( {creationtime: creationtime}, {safe: true} , function(err) {
+        newVideo.update( {creationTime: creationtime}, {safe: true} , function(err) {
           if (err) return console.error(err);
           console.log("creationtime saved: "+creationtime);
         });
@@ -59,7 +52,7 @@ module.exports.edit = function(newVideo) {
 
   return new Promise(function(resolve, reject){
 
-    var mainvid = "uploads/"+newVideo.filename;
+    var mainvid = newVideo.sourcePath;
 
     ffmpeg(mainvid).ffprobe(function(err, data) {
       console.log("edit trailer ...");
@@ -79,78 +72,74 @@ module.exports.edit = function(newVideo) {
       }
       // trailer angleichen
       ffmpeg(trailer)
-      .fps(fps)
-      .videoFilters(
-        [
-          // Scale trailer to dimensions of mainvid
-          {
-            filter: 'scale',
-            options: 'iw*min('+width+'/iw\\,'+height+'/ih):ih*min('+width+'/iw\\,'+height+'/ih)'
-          },
-          {
-            filter: 'pad',
-            options: width+':'+height+':('+width+'-iw*min('+width+'/iw\\,'+height+'/ih))/2:('+height+'-ih*min('+width+'/iw\\,'+height+'/ih))/2'
-          },
-          {
-            filter: 'setsar',
-            options: sar
-          }
-        ])
-      .save("temp/"+newVideo.videoId+"_trailer.mp4")
-      .on('start', function(commandLine) {
-        console.log('Spawned Ffmpeg with command: ' + commandLine);
-      })
-      .on('progress', function(progress) {
-        console.log('Processing: ' + progress.percent + '% done');
-      })
-      .on('end', function() {
-        console.log('trailer prepared for merging.');
-  //      console.log(end);
-        editVideo(mainvid, "temp/"+newVideo.videoId+"_mainvid.mp4");
-      });
+        .fps(fps)
+        .videoFilters(
+          [
+            // Scale trailer to dimensions of mainvid
+            {
+              filter: 'scale',
+              options: 'iw*min('+width+'/iw\\,'+height+'/ih):ih*min('+width+'/iw\\,'+height+'/ih)'
+            },
+            {
+              filter: 'pad',
+              options: width+':'+height+':('+width+'-iw*min('+width+'/iw\\,'+height+'/ih))/2:('+height+'-ih*min('+width+'/iw\\,'+height+'/ih))/2'
+            },
+            {
+              filter: 'setsar',
+              options: sar
+            }
+          ])
+        .save("temp/"+newVideo.videoId+"_trailer.mp4")
+        .on('start', function(commandLine) {
+          console.log('Spawned Ffmpeg with command: ' + commandLine);
+        })
+        .on('progress', function(progress) {
+          console.log('Processing: ' + progress.percent + '% done');
+        })
+        .on('end', function() {
+          console.log('trailer prepared for merging.');
+          //      console.log(end);
+          editVideo(mainvid, "temp/"+newVideo.videoId+"_mainvid.mp4");
+        });
     });
     var editVideo = function(mainvid, outputpath) {
       console.log('Normalize mainvid for merging');
       ffmpeg(mainvid)
-      .save(outputpath)
-      .on('end', function() {
-        console.log('mainvid prepared for merging.');
-        mergeFiles();
-      });
+        .save(outputpath)
+        .on('end', function() {
+          console.log('mainvid prepared for merging.');
+          mergeFiles();
+        });
     };
 
     var mergeFiles = function() {
       console.log('Start merging ...');
       var outputName = newVideo.videoId+"_"+newVideo.machinetitle+".mp4";
-      var outputDest = "videofiles/"+outputName;
+      var outputDest = newVideo.videoPath;
       ffmpeg()
-      .input("temp/"+newVideo.videoId+"_trailer.mp4")
-      .input("temp/"+newVideo.videoId+"_mainvid.mp4")
-      .mergeToFile(outputDest, "temp/")
-      .on('error', function(err) {
-        if(err) return console.log(err);
-      })
-      .on('end', function() {
-        console.log('Merging finished!');
-        fs.unlink("temp/"+newVideo.videoId+"_trailer.mp4"), function(err){
-          if (err) reject('editing failed!\n' + err );
-//          console.log('Temp file deleted successfully: '+'temp/'+newVideo.videoId+'_trailer.mp4');
-        }
-        fs.unlink("temp/"+newVideo.videoId+"_mainvid.mp4"), function(err){
-          if (err) reject('editing failed!\n' + err );
-//          console.log('Temp file deleted successfully: '+'temp/'+newVideo.videoId+'_mainvid.mp4');
-        }
+        .input("temp/"+newVideo.videoId+"_trailer.mp4")
+        .input("temp/"+newVideo.videoId+"_mainvid.mp4")
+        .mergeToFile(outputDest, "temp/")
+          .on('error', function(err) {
+            if(err) return console.log(err);
+          })
+        .on('end', function() {
+          console.log('Merging finished!');
+          fs.unlink("temp/"+newVideo.videoId+"_trailer.mp4"), function(err){
+            if (err) reject('editing failed!\n' + err );
+            //          console.log('Temp file deleted successfully: '+'temp/'+newVideo.videoId+'_trailer.mp4');
+          }
+          fs.unlink("temp/"+newVideo.videoId+"_mainvid.mp4"), function(err){
+            if (err) reject('editing failed!\n' + err );
+            //          console.log('Temp file deleted successfully: '+'temp/'+newVideo.videoId+'_mainvid.mp4');
+          }
 
-        newVideo.update( {editedVideoFilename: outputName}, {safe: true} , function(err) {
-          if (err) reject('editing failed!\n' + err );
-          console.log("Update: editedVideoFilename set to "+outputName);
-          newVideo.update( {editingDone: true}, {safe: true} , function(err) {
-            if (err) return console.error(err);
-            console.log("Update: editingDone set true");
+          newVideo.update( {filename: outputName, editingDone: true}, {safe: true} , function(err) {
+            if (err) reject('editing failed!\n' + err );
+            console.log("Editing done: "+outputName);
             resolve('video edited!');
           });
         });
-      });
     };
   });
 };
@@ -165,6 +154,7 @@ module.exports.remove = function(videoId) {
       resolve('video removed!');
     });
   });
+  // TODO: delete the file
 };
 
 
