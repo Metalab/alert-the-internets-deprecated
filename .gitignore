@@ -2,6 +2,5 @@ node_modules/*
 uploads/*
 temp/*
 videofiles/*
-mediasnippets/*
 settings.json
 .vagrant/
